@@ -1,11 +1,15 @@
-from flask import Flask, render_templates,request, send_file
+from flask import Flask, render_template, request, send_file
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 import csv
+import os
 
 app = Flask(__name__)
 
-#  Training Data (improved)
+# Initialize storage safely
+app.last_results = []
+
+# Training Data
 texts = [
     "server crashed badly",
     "disk failure detected",
@@ -33,7 +37,7 @@ labels = [
     "INFO","INFO","INFO","INFO","INFO"
 ]
 
-#  Train Model
+# Train Model
 vectorizer = TfidfVectorizer()
 X = vectorizer.fit_transform(texts)
 
@@ -41,11 +45,11 @@ model = LogisticRegression()
 model.fit(X, labels)
 
 
-#  Hybrid AI (RULE + ML)
+# Hybrid classification
 def classify_log(text):
     text = text.lower()
 
-    #  Rule-based (strong accuracy)
+    # Rule-based
     if any(word in text for word in ["crash", "failed", "failure", "error", "outage", "critical"]):
         return "CRITICAL"
     elif any(word in text for word in ["high", "slow", "latency", "delay", "usage", "full"]):
@@ -53,7 +57,7 @@ def classify_log(text):
     elif any(word in text for word in ["success", "started", "completed", "running", "login"]):
         return "INFO"
 
-    #  ML fallback
+    # ML fallback
     X_test = vectorizer.transform([text])
     prediction = model.predict(X_test)
     return prediction[0]
@@ -66,13 +70,11 @@ def home():
     logs = ""
 
     if request.method == "POST":
-        logs = request.form["logs"]
+        logs = request.form.get("logs", "")
         lines = logs.split("\n")
 
         for line in lines:
             if line.strip():
-
-                # extract message
                 message = line.split(":", 1)[-1]
 
                 category = classify_log(message)
@@ -98,9 +100,11 @@ def home():
     )
 
 
-#  Download CSV
 @app.route("/download")
 def download():
+    if not app.last_results:
+        return "No data available to download."
+
     with open("report.csv", "w", newline="") as file:
         writer = csv.writer(file)
         writer.writerow(["Log", "Category"])
@@ -111,8 +115,7 @@ def download():
     return send_file("report.csv", as_attachment=True)
 
 
-import os
-
+# Run app (important for Render)
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
+    port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
