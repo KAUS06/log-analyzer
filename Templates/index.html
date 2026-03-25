@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Log Analyzer</title>
+
+    <style>
+        body {
+            font-family: 'Segoe UI';
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: white;
+            text-align: center;
+        }
+
+        .container {
+            width: 70%;
+            margin: auto;
+            padding: 20px;
+        }
+
+        textarea {
+            width: 90%;
+            padding: 12px;
+            border-radius: 10px;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: none;
+            background: #38bdf8;
+            color: white;
+            cursor: pointer;
+        }
+
+        .cards {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+
+        .card {
+            padding: 15px;
+            border-radius: 10px;
+            width: 25%;
+            background: white;
+            color: black;
+        }
+
+        .critical { border-left: 5px solid red; }
+        .warning { border-left: 5px solid orange; }
+        .info { border-left: 5px solid blue; }
+
+        .log-box {
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .log {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 8px;
+        }
+
+        .log.critical { background: rgba(255,0,0,0.2); }
+        .log.warning { background: rgba(255,165,0,0.2); }
+        .log.info { background: rgba(0,0,255,0.2); }
+
+        input {
+            padding: 8px;
+            margin-top: 10px;
+            width: 50%;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1> Log Analyzer</h1>
+
+    <form method="POST">
+        <textarea name="logs" rows="6" placeholder="Paste logs here..." required>{{ logs }}</textarea><br>
+        <button type="submit">Analyze</button>
+    </form>
+
+    {% if results %}
+
+    <div class="cards">
+        <div class="card critical">🔥 Critical: {{ critical }}</div>
+        <div class="card warning">⚠️ Warning: {{ warning }}</div>
+        <div class="card info">ℹ️ Info: {{ info }}</div>
+    </div>
+
+    <input type="text" placeholder="🔍 Search logs..." onkeyup="filterLogs()">
+
+    <div class="log-box">
+        {% for line, category in results %}
+            <div class="log {{ category|lower }}">
+                {{ line }} → <b>{{ category }}</b>
+            </div>
+        {% endfor %}
+    </div>
+
+    <br>
+    <a href="/download">
+        <button>⬇️ Download Report</button>
+    </a>
+
+    {% endif %}
+</div>
+
+<script>
+function filterLogs() {
+    let input = document.querySelector("input").value.toLowerCase();
+    let logs = document.getElementsByClassName("log");
+
+    for (let i = 0; i < logs.length; i++) {
+        let text = logs[i].innerText.toLowerCase();
+        logs[i].style.display = text.includes(input) ? "" : "none";
+    }
+}
+</script>
+
+</body>
+</html>
